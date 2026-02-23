@@ -1,7 +1,7 @@
 # --- TAHAP 1: BUILD ---
 FROM gcc:12-bookworm as builder
 
-# Hanya instal library yang benar-benar dibutuhkan
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     cmake \
     libmariadb-dev-compat \
@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY . .
 
-# Proses Compile (arahkan ke folder karts-backend)
+# Process Compile (Now using the current directory as source)
 RUN mkdir build && cd build && \
-    cmake ../karts-backend && \
+    cmake .. && \
     make
 
 # --- TAHAP 2: RUNTIME ---
@@ -25,10 +25,10 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy hasil compile dan ca.pem
+# Copy build result and necessary files
 COPY --from=builder /app/build/karts-backend .
-COPY --from=builder /app/karts-backend/ca.pem . 
-COPY --from=builder /app/karts-backend/users.json .
+COPY --from=builder /app/ca.pem . 
+COPY --from=builder /app/users.json .
 
 EXPOSE 8080
 
