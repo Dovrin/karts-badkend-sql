@@ -1,0 +1,12 @@
+[
+  {
+    "username": "admin_smukie",
+    "password": "smukie123",
+    "role": "superadmin"
+  },
+  {
+    "username": "kepsek_smukie",
+    "password": "passwordsekolah",
+    "role": "admin"
+  }
+]
