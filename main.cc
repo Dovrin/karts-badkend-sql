@@ -85,6 +85,21 @@ int main() {
         }
     });
 
+    // --- TEMPORARY MIGRATE ENDPOINT ---
+    // Visit this once at: https://your-backend.onrender.com/api/init-db
+    svr.Get("/api/init-db", [](const httplib::Request& req, httplib::Response& res) {
+        MYSQL* conn = get_db_connection();
+        if (!conn) { res.status = 500; res.set_content("DB Connection Failed", "text/plain"); return; }
+        
+        if (mysql_query(conn, "ALTER TABLE events MODIFY id INT AUTO_INCREMENT;")) {
+            res.status = 500;
+            res.set_content(mysql_error(conn), "text/plain");
+        } else {
+            res.set_content("Database updated successfully! Auto-increment is now enabled for events.", "text/plain");
+        }
+        mysql_close(conn);
+    });
+
     // 2. GET ANNOUNCEMENTS
     svr.Get("/api/announcements", [](const httplib::Request& req, httplib::Response& res) {
         MYSQL* conn = get_db_connection();
@@ -183,8 +198,7 @@ int main() {
             MYSQL* conn = get_db_connection();
             if (!conn) { res.status = 500; return; }
 
-            std::string query = "INSERT INTO events (id, name, date, location, description) VALUES (" 
-                                + std::to_string(j.value("id", 0)) + ", '" 
+            std::string query = "INSERT INTO events (name, date, location, description) VALUES ('" 
                                 + j.value("name", "") + "', '" 
                                 + j.value("date", "") + "', '" 
                                 + j.value("location", "") + "', '" 
