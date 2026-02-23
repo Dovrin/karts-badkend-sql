@@ -88,53 +88,67 @@ int main() {
     // 2. GET ANNOUNCEMENTS
     svr.Get("/api/announcements", [](const httplib::Request& req, httplib::Response& res) {
         MYSQL* conn = get_db_connection();
-        if (!conn) { res.status = 500; return; }
-
-        mysql_query(conn, "SELECT id, announcements, description, date, location, urgent FROM announcements");
-        MYSQL_RES* result = mysql_store_result(conn);
-        
-        json j_list = json::array();
-        if (result) {
-            MYSQL_ROW row;
-            while ((row = mysql_fetch_row(result))) {
-                j_list.push_back({
-                    {"id", row[0] ? std::stoi(row[0]) : 0},
-                    {"announcements", row[1] ? row[1] : ""},
-                    {"description", row[2] ? row[2] : ""},
-                    {"date", row[3] ? row[3] : ""},
-                    {"location", row[4] ? row[4] : ""},
-                    {"urgent", row[5] && std::string(row[5]) == "1"}
-                });
-            }
-            mysql_free_result(result);
+        if (!conn) { 
+            res.status = 500; 
+            res.set_content("{\"error\":\"DB Connection Failed\"}", "application/json");
+            return; 
         }
-        res.set_content(j_list.dump(), "application/json");
+
+        if (mysql_query(conn, "SELECT id, announcements, description, date, location, urgent FROM announcements")) {
+            res.status = 500;
+            res.set_content(mysql_error(conn), "text/plain");
+        } else {
+            MYSQL_RES* result = mysql_store_result(conn);
+            json j_list = json::array();
+            if (result) {
+                MYSQL_ROW row;
+                while ((row = mysql_fetch_row(result))) {
+                    j_list.push_back({
+                        {"id", row[0] ? std::stoi(row[0]) : 0},
+                        {"announcements", row[1] ? row[1] : ""},
+                        {"description", row[2] ? row[2] : ""},
+                        {"date", row[3] ? row[3] : ""},
+                        {"location", row[4] ? row[4] : ""},
+                        {"urgent", row[5] && std::string(row[5]) == "1"}
+                    });
+                }
+                mysql_free_result(result);
+            }
+            res.set_content(j_list.dump(), "application/json");
+        }
         mysql_close(conn);
     });
 
     // 3. GET EVENTS
     svr.Get("/api/events", [](const httplib::Request& req, httplib::Response& res) {
         MYSQL* conn = get_db_connection();
-        if (!conn) { res.status = 500; return; }
-
-        mysql_query(conn, "SELECT id, name, date, location, description FROM events");
-        MYSQL_RES* result = mysql_store_result(conn);
-        
-        json j_list = json::array();
-        if (result) {
-            MYSQL_ROW row;
-            while ((row = mysql_fetch_row(result))) {
-                j_list.push_back({
-                    {"id", row[0] ? std::stoi(row[0]) : 0},
-                    {"name", row[1] ? row[1] : ""},
-                    {"date", row[2] ? row[2] : ""},
-                    {"location", row[3] ? row[3] : ""},
-                    {"description", row[4] ? row[4] : ""}
-                });
-            }
-            mysql_free_result(result);
+        if (!conn) { 
+            res.status = 500; 
+            res.set_content("{\"error\":\"DB Connection Failed\"}", "application/json");
+            return; 
         }
-        res.set_content(j_list.dump(), "application/json");
+
+        if (mysql_query(conn, "SELECT id, name, date, location, description FROM events")) {
+            res.status = 500;
+            res.set_content(mysql_error(conn), "text/plain");
+        } else {
+            MYSQL_RES* result = mysql_store_result(conn);
+            json j_list = json::array();
+            if (result) {
+                MYSQL_ROW row;
+                while ((row = mysql_fetch_row(result))) {
+                    j_list.push_back({
+                        {"id", row[0] ? std::stoi(row[0]) : 0},
+                        {"name", row[1] ? row[1] : ""},
+                        {"date", row[2] ? row[2] : ""},
+                        {"location", row[3] ? row[3] : ""},
+                        {"description", row[4] ? row[4] : ""}
+                    });
+                }
+                mysql_free_result(result);
+            }
+            res.set_content(j_list.dump(), "application/json");
+        }
         mysql_close(conn);
     });
 
@@ -154,6 +168,7 @@ int main() {
 
             if (mysql_query(conn, query.c_str())) {
                 res.status = 500;
+                res.set_content(mysql_error(conn), "text/plain");
             } else {
                 res.set_content("{\"status\":\"success\"}", "application/json");
             }
@@ -177,6 +192,7 @@ int main() {
 
             if (mysql_query(conn, query.c_str())) {
                 res.status = 500;
+                res.set_content(mysql_error(conn), "text/plain");
             } else {
                 res.set_content("{\"status\":\"success\"}", "application/json");
             }
